@@ -4,22 +4,21 @@
 
 | Что | Значение |
 |---|---|
-| ОС | Ubuntu 24.04.4 LTS (Linux x86_64) |
-| Python | 3.12.3 (`/usr/bin/python3.12`) |
-| Poetry | 2.5.1 (плагин `poetry-plugin-export` 1.10.1) |
-| Git | 2.43.0 |
-
-Poetry установлен в отдельный venv вне проектов, поэтому в `poetry_project/.venv` его нет.
+| ОС | macOS 26.6.2 (build 25G83) |
+| Python | 3.12.14 |
+| Poetry | 2.5.1 |
+| Git | 2.50.1 (Apple Git-155) |
 
 ## 2. Интерпретаторы
 
 ```text
-pip_project:    /home/claude/practice_2_result/pip_project/.venv/bin/python     (Python 3.12.3)
-poetry_project: /home/claude/practice_2_result/poetry_project/.venv/bin/python  (Python 3.12.3)
+pip_project:    /Users/admin/Documents/practice_2_result/pip_project/.venv/bin/python
+poetry_project: /Users/admin/Documents/practice_2_result/poetry_project/.venv/bin/python
 ```
 
-Проверка: `python --version` и `python -c "import sys; print(sys.executable)"` после активации (часть 1),
-`poetry env info --executable` (часть 2). В обоих путях есть имя проекта и `.venv`.
+Проверка: `python -c "import sys; print(sys.executable)"` после активации (часть 1) и
+`poetry env info --executable` (часть 2). В обоих путях есть имя проекта и `.venv`. Оба окружения созданы
+из Python 3.12 (`python3.12 -m venv .venv`, `poetry env use 3.12`).
 
 ## 3. Прямые зависимости
 
@@ -94,7 +93,7 @@ poetry_project: /home/claude/practice_2_result/poetry_project/.venv/bin/python  
 1. `poetry export --format requirements.txt --output requirements.txt`: в файл попали пакеты группы `main` с хешами
    и маркерами окружения (`python_version == "3.12"`).
 2. `rm -rf .venv` (плюс кэши и сгенерированные файлы), больше ничего не трогалось.
-3. `poetry install` создал новое `.venv` (Python 3.12.3) и поставил 22 пакета точно по `poetry.lock`.
+3. `poetry install` создал новое `.venv` (Python 3.12) и поставил 22 пакета точно по `poetry.lock`.
    Ручных `poetry add` не потребовалось.
 4. `poetry run pytest` → `1 passed`.
 5. Скрипт создал `temperature_24h.csv` (24 строки данных, столбцы `time,temperature_c`) и `temperature_24h.png`.
@@ -111,15 +110,10 @@ poetry_project: /home/claude/practice_2_result/poetry_project/.venv/bin/python  
 
 В обоих случаях воспроизводимость подтверждается не наличием файла, а чистой пересборкой окружения и успешным запуском.
 
-## Ограничение проверки
+## Проверка запуска
 
-Работа выполнялась в песочнице, из которой `api.open-meteo.com` недоступен (прокси отвечает `403`).
-Поэтому:
+Оба скрипта запущены на macOS с реальным API Open-Meteo:
 
-- реальный запрос к API отсюда выполнить не удалось; исходный скрипт при этом падал с `JSONDecodeError`,
-  а доработанный падает с понятным `HTTPError: 403`, то есть ошибка HTTP больше не маскируется;
-- запуски скриптов, дающие CSV и PNG, выполнялись с подменой `requests.get` внешним запускателем
-  (синтетические 168 значений в формате Open-Meteo). Он не входит в сдаваемые файлы;
-- unit-тест сети не использует вовсе, на него ограничение не влияет.
-
-Запуск на машине с доступом в интернет: `poetry run python plt_temp.py` (и `python plt_temp.py` в `pip_project`).
+- `pip_project`: создан `temperature_24h.csv` (`wc -l` → 25 строк: заголовок и 24 строки данных);
+- `poetry_project`: созданы `temperature_24h.csv` (25 строк, из них 24 с данными) и `temperature_24h.png`,
+  тест проходит (`poetry run pytest`).
